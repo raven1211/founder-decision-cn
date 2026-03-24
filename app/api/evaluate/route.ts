@@ -15,10 +15,12 @@ export async function POST(request: Request) {
     if (!apiKey) {
       console.error('KIMI_API_KEY not configured');
       return NextResponse.json(
-        { error: '服务配置错误，请联系管理员' },
+        { error: '服务配置错误：KIMI_API_KEY 未配置' },
         { status: 500 }
       );
     }
+
+    console.log('Using Kimi API Key:', apiKey.slice(0, 10) + '...');
 
     const prompt = `你是一位资深创业投资人和 YC 合伙人。请基于以下框架评估这个创业想法：
 
@@ -58,6 +60,8 @@ verdict 说明：
 
 请只返回 JSON，不要其他文字。`;
 
+    console.log('Calling Kimi API...');
+
     const response = await fetch('https://api.moonshot.cn/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -74,21 +78,25 @@ verdict 说明：
       })
     });
 
+    console.log('Kimi API response status:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Kimi API error:', response.status, errorText);
       return NextResponse.json(
-        { error: 'AI 服务暂时不可用，请稍后重试' },
+        { error: `AI 服务错误: ${response.status} - ${errorText.slice(0, 200)}` },
         { status: 503 }
       );
     }
 
     const data = await response.json();
+    console.log('Kimi API response:', JSON.stringify(data, null, 2).slice(0, 500));
+
     const content = data.choices?.[0]?.message?.content;
 
     if (!content) {
       return NextResponse.json(
-        { error: 'AI 返回数据异常' },
+        { error: 'AI 返回数据异常：无内容', details: data },
         { status: 500 }
       );
     }
@@ -105,7 +113,7 @@ verdict 说明：
     } catch (e) {
       console.error('JSON parse error:', e, 'Content:', content);
       return NextResponse.json(
-        { error: 'AI 返回格式异常，请重试' },
+        { error: 'AI 返回格式异常', content: content.slice(0, 500) },
         { status: 500 }
       );
     }
@@ -113,7 +121,7 @@ verdict 说明：
     // 验证返回格式
     if (!result.verdict || !result.strengths || !result.risks) {
       return NextResponse.json(
-        { error: 'AI 返回数据不完整' },
+        { error: 'AI 返回数据不完整', result },
         { status: 500 }
       );
     }
@@ -123,7 +131,7 @@ verdict 说明：
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json(
-      { error: '服务器内部错误' },
+      { error: `服务器内部错误: ${error instanceof Error ? error.message : '未知错误'}` },
       { status: 500 }
     );
   }

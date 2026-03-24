@@ -21,6 +21,20 @@ const exampleIdeas = [
   }
 ];
 
+const stageOptions = [
+  { value: 'just_idea', label: '💡 只是想法' },
+  { value: 'research', label: '🔍 做过用户调研' },
+  { value: 'mvp', label: '🛠️ MVP已搭建' },
+  { value: 'launched', label: '🚀 已上线有早期用户' }
+];
+
+const needOptions = [
+  { value: 'clarity', label: '判断是否值得继续' },
+  { value: 'positioning', label: '明确产品定位' },
+  { value: 'validation', label: '设计验证方案' },
+  { value: 'conversion', label: '提升转化率' }
+];
+
 export default function Home() {
   const [idea, setIdea] = useState('');
   const [stage, setStage] = useState('');
@@ -76,7 +90,7 @@ export default function Home() {
         });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : '评估失败');
+      setError(err instanceof Error ? err.message : '评估失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -85,6 +99,7 @@ export default function Home() {
   const loadExample = (ex: typeof exampleIdeas[0]) => {
     setIdea(ex.idea);
     setResult(null);
+    setError('');
   };
 
   const signIn = async () => {
@@ -99,77 +114,118 @@ export default function Home() {
     await supabase.auth.signOut();
   };
 
+  const getVerdictStyle = (verdict: string) => {
+    switch (verdict) {
+      case 'proceed': return 'verdict-proceed';
+      case 'refine': return 'verdict-refine';
+      case 'drop': return 'verdict-drop';
+      default: return 'bg-gray-50 border-gray-200';
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#fafafc]">
       {/* Header */}
-      <header className="border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-6 py-5 flex justify-between items-center">
-          <div>
-            <h1 className="text-lg font-medium tracking-tight">创业决策引擎</h1>
-            <p className="text-sm text-gray-400 mt-0.5">YC & 中文投资视角</p>
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-base font-semibold text-gray-900">创业决策引擎</h1>
+              <p className="text-xs text-gray-500">YC × 中文投资视角</p>
+            </div>
           </div>
           <div>
             {user ? (
-              <button
-                onClick={signOut}
-                className="text-sm text-gray-500 hover:text-gray-900"
-              >
+              <button onClick={signOut} className="text-sm text-gray-600 hover:text-gray-900 transition">
                 退出
               </button>
             ) : (
-              <button
-                onClick={signIn}
-                className="text-sm px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition"
-              >
-                登录
+              <button onClick={signIn} className="btn-secondary text-sm">
+                GitHub 登录
               </button>
             )}
           </div>
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <div className="grid lg:grid-cols-3 gap-10">
-          {/* Main */}
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Intro */}
-            <div>
-              <h2 className="text-2xl font-medium mb-2">验证你的想法值不值得做</h2>
-              <p className="text-gray-500 text-sm">
-                基于 YC 投资框架和中国创业环境，60 秒内给出决策建议
-              </p>
+            {/* Hero */}
+            <div className="card p-8">
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-semibold text-gray-900 mb-2">在动手之前，先验证想法值不值得做</h2>
+                  <p className="text-gray-600 leading-relaxed">
+                    基于 YC 投资框架和中国创业环境，AI 在 60 秒内给出决策建议：
+                    <span className="font-medium text-gray-900">继续推进、需要优化、建议放弃</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-gray-50 rounded-xl">
+                  <div className="text-2xl font-bold text-slate-900">~60秒</div>
+                  <div className="text-xs text-gray-500 mt-1">快速决策</div>
+                </div>
+                <div className="text-center p-4 bg-gray-50 rounded-xl">
+                  <div className="text-2xl font-bold text-slate-900">3个风险</div>
+                  <div className="text-xs text-gray-500 mt-1">提前预警</div>
+                </div>
+                <div className="text-center p-4 bg-gray-50 rounded-xl">
+                  <div className="text-2xl font-bold text-slate-900">7天计划</div>
+                  <div className="text-xs text-gray-500 mt-1">行动指南</div>
+                </div>
+              </div>
             </div>
 
             {/* Examples */}
-            <div className="flex flex-wrap gap-2">
-              {exampleIdeas.map((ex, i) => (
-                <button
-                  key={i}
-                  onClick={() => loadExample(ex)}
-                  className="px-3 py-1.5 text-sm bg-gray-50 text-gray-600 rounded-md hover:bg-gray-100 transition"
-                >
-                  {ex.title}
-                </button>
-              ))}
+            <div className="card p-6">
+              <p className="text-sm font-medium text-gray-700 mb-3">参考示例（点击快速填充）：</p>
+              <div className="flex flex-wrap gap-2">
+                {exampleIdeas.map((ex, i) => (
+                  <button
+                    key={i}
+                    onClick={() => loadExample(ex)}
+                    className="px-4 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition"
+                  >
+                    {ex.title}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Input */}
-            <div className="space-y-4">
+            {/* Input Form */}
+            <div className="card p-6 space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   你的创业想法
                 </label>
                 <textarea
                   value={idea}
-                  onChange={(e) => setIdea(e.target.value)}
+                  onChange={(e) => {
+                    setIdea(e.target.value);
+                    setError('');
+                  }}
                   placeholder="描述：目标用户是谁，解决什么问题，怎么解决..."
-                  className="w-full h-32 p-4 border border-gray-200 rounded-lg resize-none focus:outline-none focus:border-gray-400 transition"
+                  className="input-field h-32 resize-none"
                 />
-                <div className="flex justify-between mt-2 text-xs text-gray-400">
-                  <span className={idea.length < 10 ? 'text-red-500' : ''}>
+                <div className="flex justify-between mt-2 text-xs">
+                  <span className={idea.length < 10 ? 'text-red-500 font-medium' : 'text-gray-400'}>
                     {idea.length} 字符
                   </span>
-                  <span>建议包含：用户 + 问题 + 解决方案</span>
+                  <span className="text-gray-400">建议包含：用户 + 问题 + 解决方案</span>
                 </div>
               </div>
 
@@ -179,13 +235,12 @@ export default function Home() {
                   <select
                     value={stage}
                     onChange={(e) => setStage(e.target.value)}
-                    className="w-full p-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 bg-white"
+                    className="input-field"
                   >
                     <option value="">选择阶段</option>
-                    <option value="just_idea">只是想法</option>
-                    <option value="research">做过用户调研</option>
-                    <option value="mvp">MVP已搭建</option>
-                    <option value="launched">已上线有早期用户</option>
+                    {stageOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -194,59 +249,75 @@ export default function Home() {
                   <select
                     value={need}
                     onChange={(e) => setNeed(e.target.value)}
-                    className="w-full p-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 bg-white"
+                    className="input-field"
                   >
                     <option value="">选择需求</option>
-                    <option value="clarity">判断是否值得继续</option>
-                    <option value="positioning">明确产品定位</option>
-                    <option value="validation">设计验证方案</option>
-                    <option value="conversion">提升转化率</option>
+                    {needOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                 </div>
               </div>
 
               {error && (
-                <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>
+                <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm">
+                  {error}
+                </div>
               )}
 
               <button
                 onClick={handleEvaluate}
                 disabled={loading || idea.length < 10}
-                className="w-full py-3.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                className="w-full btn-primary flex items-center justify-center gap-2"
               >
-                {loading ? '评估中...' : '获取决策建议'}
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span>AI 评估中...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <span>获取决策建议</span>
+                  </>
+                )}
               </button>
             </div>
 
             {/* Results */}
             {result && (
-              <div className="border-t border-gray-100 pt-8 space-y-6">
-                {/* Verdict */}
-                <div className={`p-6 rounded-xl border ${verdictLabels[result.verdict].bg}`}>
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* Verdict Card */}
+                <div className={`card p-6 border-2 ${getVerdictStyle(result.verdict)}`}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">评估结论</p>
-                      <h3 className={`text-2xl font-medium ${verdictLabels[result.verdict].color}`}>
-                        {verdictLabels[result.verdict].text}
+                      <p className="text-xs font-medium opacity-70 mb-1">评估结论</p>
+                      <h3 className="text-3xl font-bold">
+                        {verdictLabels[result.verdict]?.text || result.verdict}
                       </h3>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">信心指数</p>
-                      <div className="text-2xl font-medium">{result.confidence}%</div>
+                      <p className="text-xs font-medium opacity-70 mb-1">信心指数</p>
+                      <div className="text-3xl font-bold">{result.confidence}%</div>
                     </div>
                   </div>
-                  <p className="mt-4 text-sm text-gray-600">{result.reasoning}</p>
+                  <p className="mt-4 text-sm leading-relaxed opacity-90">{result.reasoning}</p>
                 </div>
 
-                {/* Score */}
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">机会评分</span>
-                    <span className="text-gray-900 font-medium">{result.opportunityScore}/100</span>
+                {/* Score Bar */}
+                <div className="card p-6">
+                  <div className="flex justify-between text-sm mb-3">
+                    <span className="font-medium text-gray-700">机会评分</span>
+                    <span className="font-semibold text-gray-900">{result.opportunityScore}/100</span>
                   </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gray-900 transition-all"
+                      className="h-full bg-slate-900 rounded-full transition-all duration-1000"
                       style={{ width: `${result.opportunityScore}%` }}
                     />
                   </div>
@@ -254,25 +325,31 @@ export default function Home() {
 
                 {/* Strengths & Risks */}
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">核心优势</h4>
-                    <ul className="space-y-2">
+                  <div className="card p-6">
+                    <h4 className="section-title flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">+</span>
+                      核心优势
+                    </h4>
+                    <ul className="space-y-3">
                       {result.strengths.map((s, i) => (
-                        <li key={i} className="text-sm text-gray-600 flex items-start">
-                          <span className="text-emerald-500 mr-2">+</span>
-                          {s}
+                        <li key={i} className="text-sm text-gray-600 flex items-start gap-3">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 shrink-0" />
+                          <span className="leading-relaxed">{s}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">关键风险</h4>
-                    <ul className="space-y-2">
+                  <div className="card p-6">
+                    <h4 className="section-title flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs">−</span>
+                      关键风险
+                    </h4>
+                    <ul className="space-y-3">
                       {result.risks.map((r, i) => (
-                        <li key={i} className="text-sm text-gray-600 flex items-start">
-                          <span className="text-red-400 mr-2">−</span>
-                          {r}
+                        <li key={i} className="text-sm text-gray-600 flex items-start gap-3">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-2 shrink-0" />
+                          <span className="leading-relaxed">{r}</span>
                         </li>
                       ))}
                     </ul>
@@ -280,43 +357,54 @@ export default function Home() {
                 </div>
 
                 {/* Actions */}
-                <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">建议行动</h4>
-                  <ol className="space-y-2">
+                <div className="card p-6">
+                  <h4 className="section-title">建议行动</h4>
+                  <ol className="space-y-3">
                     {result.actions.map((a, i) => (
-                      <li key={i} className="text-sm text-gray-600 flex">
-                        <span className="text-gray-400 mr-3">{i + 1}.</span>
-                        {a}
+                      <li key={i} className="text-sm text-gray-600 flex gap-4">
+                        <span className="font-medium text-slate-900 w-6">{i + 1}.</span>
+                        <span className="leading-relaxed">{a}</span>
                       </li>
                     ))}
                   </ol>
                 </div>
 
                 {/* Sprint */}
-                <div className="bg-gray-50 rounded-xl p-5">
-                  <h4 className="text-sm font-medium text-gray-900 mb-4">7天验证计划</h4>
-                  <ul className="space-y-3">
+                <div className="card p-6">
+                  <h4 className="section-title">7天验证计划</h4>
+                  <div className="space-y-3">
                     {result.sprint.map((s, i) => (
-                      <li key={i} className="text-sm text-gray-600 flex">
-                        <span className="text-gray-400 w-14 shrink-0">Day {i + 1}</span>
-                        <span>{s}</span>
-                      </li>
+                      <div key={i} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
+                        <span className="w-12 h-6 rounded bg-slate-900 text-white text-xs font-medium flex items-center justify-center shrink-0">
+                          Day {i + 1}
+                        </span>
+                        <span className="text-sm text-gray-600 leading-relaxed">{s}</span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </div>
 
                 {/* Booking CTA */}
-                <div className="bg-gray-900 rounded-xl p-6 text-white">
-                  <h4 className="font-medium mb-2">想深入聊聊这个项目？</h4>
-                  <p className="text-sm text-gray-400 mb-4">
-                    预约 30 分钟一对一咨询，从投资视角深度分析你的想法
-                  </p>
-                  <button
-                    onClick={() => setShowBooking(true)}
-                    className="px-6 py-2.5 bg-white text-gray-900 rounded-lg text-sm font-medium hover:bg-gray-100 transition"
-                  >
-                    预约咨询 · 价格随喜
-                  </button>
+                <div className="card p-6 bg-slate-900 text-white border-slate-800">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold mb-1">想深入聊聊这个项目？</h4>
+                      <p className="text-sm text-gray-400 mb-4">
+                        预约 30 分钟一对一咨询，从投资视角深度分析你的想法
+                      </p>
+                      <button
+                        onClick={() => setShowBooking(true)}
+                        className="px-6 py-2.5 bg-white text-slate-900 rounded-lg text-sm font-medium hover:bg-gray-100 transition"
+                      >
+                        预约咨询 · 价格随喜
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -329,7 +417,7 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <footer className="mt-16 pt-8 border-t border-gray-100 text-center text-xs text-gray-400">
+        <footer className="mt-16 pt-8 border-t border-gray-200 text-center text-xs text-gray-400">
           <p>基于 YC 投资框架和中文投资环境 · 结果仅供参考</p>
         </footer>
       </div>

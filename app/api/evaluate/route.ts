@@ -11,10 +11,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const apiKey = process.env.KIMI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY || process.env.KIMI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: '服务配置错误：KIMI_API_KEY 未配置' },
+        { error: '服务配置错误：API Key 未配置' },
         { status: 500 }
       );
     }
@@ -57,15 +57,14 @@ verdict 说明：
 
 请只返回 JSON，不要其他文字。`;
 
-    // 使用 OpenAI 兼容格式调用 Kimi
-    const response = await fetch('https://api.moonshot.cn/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'moonshot-v1-8k',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: '你是一个专业的创业投资评估助手，基于 YC 和中国投资视角给出建议。只返回 JSON 格式。' },
           { role: 'user', content: prompt }
@@ -78,7 +77,7 @@ verdict 说明：
     const responseData = await response.json();
 
     if (!response.ok) {
-      console.error('Kimi API error:', response.status, responseData);
+      console.error('OpenAI API error:', response.status, responseData);
       return NextResponse.json(
         { 
           error: 'AI 服务暂时不可用', 
@@ -100,10 +99,8 @@ verdict 说明：
     // 解析 JSON
     let result;
     try {
-      // 尝试直接解析
       result = JSON.parse(content);
     } catch (e) {
-      // 尝试提取 JSON 块
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         try {
@@ -122,7 +119,6 @@ verdict 说明：
       }
     }
 
-    // 验证返回格式
     if (!result.verdict || !Array.isArray(result.strengths)) {
       return NextResponse.json(
         { error: 'AI 返回数据不完整', result },

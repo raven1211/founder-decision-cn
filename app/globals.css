@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
   --foreground-rgb: 15, 23, 42;
@@ -12,45 +10,118 @@ body {
   background: rgb(var(--background-rgb));
 }
 
-@layer components {
-  .card {
-    @apply bg-white rounded-2xl border border-gray-100 shadow-sm;
+/* 自定义类 */
+.card {
+  background-color: white;
+  border-radius: 1rem;
+  border: 1px solid rgb(243, 244, 246);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  background-color: rgb(15, 23, 42);
+  color: white;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: rgb(30, 41, 59);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  padding: 0.5rem 1rem;
+  background-color: rgb(249, 250, 251);
+  color: rgb(55, 65, 81);
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: rgb(243, 244, 246);
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: white;
+  border: 1px solid rgb(229, 231, 235);
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: rgb(15, 23, 42);
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+}
+
+.input-field::placeholder {
+  color: rgb(156, 163, 175);
+}
+
+.section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgb(17, 24, 39);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.verdict-proceed {
+  background-color: rgba(236, 253, 245, 0.8);
+  border-color: rgba(167, 243, 208, 0.6);
+  color: rgb(4, 120, 87);
+}
+
+.verdict-refine {
+  background-color: rgba(255, 251, 235, 0.8);
+  border-color: rgba(252, 211, 77, 0.6);
+  color: rgb(180, 83, 9);
+}
+
+.verdict-drop {
+  background-color: rgba(254, 242, 242, 0.8);
+  border-color: rgba(254, 202, 202, 0.6);
+  color: rgb(220, 38, 38);
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
   }
-  
-  .card-hover {
-    @apply hover:shadow-md hover:border-gray-200 transition-all duration-300;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .btn-primary {
-    @apply px-6 py-3 bg-slate-900 text-white rounded-xl font-medium 
-           hover:bg-slate-800 active:scale-[0.98] transition-all duration-200
-           disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
+}
+
+.animate-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* 加载动画 */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
-  
-  .btn-secondary {
-    @apply px-4 py-2 bg-gray-50 text-gray-700 rounded-lg font-medium
-           hover:bg-gray-100 active:scale-[0.98] transition-all duration-200;
-  }
-  
-  .input-field {
-    @apply w-full px-4 py-3 bg-white border border-gray-200 rounded-xl
-           focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900
-           placeholder:text-gray-400 transition-all duration-200;
-  }
-  
-  .section-title {
-    @apply text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3;
-  }
-  
-  .verdict-proceed {
-    @apply bg-emerald-50/80 border-emerald-200/60 text-emerald-700;
-  }
-  
-  .verdict-refine {
-    @apply bg-amber-50/80 border-amber-200/60 text-amber-700;
-  }
-  
-  .verdict-drop {
-    @apply bg-red-50/80 border-red-200/60 text-red-600;
-  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }

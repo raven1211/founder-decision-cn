@@ -13,14 +13,11 @@ export async function POST(request: Request) {
 
     const apiKey = process.env.KIMI_API_KEY;
     if (!apiKey) {
-      console.error('KIMI_API_KEY not configured');
       return NextResponse.json(
         { error: '服务配置错误：KIMI_API_KEY 未配置' },
         { status: 500 }
       );
     }
-
-    console.log('Using Kimi API Key:', apiKey.slice(0, 10) + '...');
 
     const prompt = `你是一位资深创业投资人和 YC 合伙人。请基于以下框架评估这个创业想法：
 
@@ -60,8 +57,7 @@ verdict 说明：
 
 请只返回 JSON，不要其他文字。`;
 
-    console.log('Calling Kimi API...');
-
+    // 使用 OpenAI 兼容格式调用 Kimi
     const response = await fetch('https://api.moonshot.cn/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -71,32 +67,32 @@ verdict 说明：
       body: JSON.stringify({
         model: 'moonshot-v1-8k',
         messages: [
-          { role: 'system', content: '你是一个专业的创业投资评估助手，基于 YC 和中国投资视角给出建议。' },
+          { role: 'system', content: '你是一个专业的创业投资评估助手，基于 YC 和中国投资视角给出建议。只返回 JSON 格式。' },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7
+        temperature: 0.7,
+        max_tokens: 2000
       })
     });
 
-    console.log('Kimi API response status:', response.status);
+    const responseData = await response.json();
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Kimi API error:', response.status, errorText);
+      console.error('Kimi API error:', response.status, responseData);
       return NextResponse.json(
-        { error: `AI 服务错误: ${response.status} - ${errorText.slice(0, 200)}` },
+        { 
+          error: 'AI 服务暂时不可用', 
+          details: responseData?.error?.message || `HTTP ${response.status}` 
+        },
         { status: 503 }
       );
     }
 
-    const data = await response.json();
-    console.log('Kimi API response:', JSON.stringify(data, null, 2).slice(0, 500));
-
-    const content = data.choices?.[0]?.message?.content;
+    const content = responseData.choices?.[0]?.message?.content;
 
     if (!content) {
       return NextResponse.json(
-        { error: 'AI 返回数据异常：无内容', details: data },
+        { error: 'AI 返回数据异常', details: responseData },
         { status: 500 }
       );
     }
@@ -104,22 +100,30 @@ verdict 说明：
     // 解析 JSON
     let result;
     try {
+      // 尝试直接解析
+      result = JSON.parse(content);
+    } catch (e) {
+      // 尝试提取 JSON 块
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0]);
+        try {
+          result = JSON.parse(jsonMatch[0]);
+        } catch (e2) {
+          return NextResponse.json(
+            { error: 'AI 返回格式异常', content: content.slice(0, 500) },
+            { status: 500 }
+          );
+        }
       } else {
-        result = JSON.parse(content);
+        return NextResponse.json(
+          { error: 'AI 返回格式异常', content: content.slice(0, 500) },
+          { status: 500 }
+        );
       }
-    } catch (e) {
-      console.error('JSON parse error:', e, 'Content:', content);
-      return NextResponse.json(
-        { error: 'AI 返回格式异常', content: content.slice(0, 500) },
-        { status: 500 }
-      );
     }
 
     // 验证返回格式
-    if (!result.verdict || !result.strengths || !result.risks) {
+    if (!result.verdict || !Array.isArray(result.strengths)) {
       return NextResponse.json(
         { error: 'AI 返回数据不完整', result },
         { status: 500 }
@@ -131,7 +135,7 @@ verdict 说明：
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json(
-      { error: `服务器内部错误: ${error instanceof Error ? error.message : '未知错误'}` },
+      { error: `服务器错误: ${error instanceof Error ? error.message : '未知错误'}` },
       { status: 500 }
     );
   }

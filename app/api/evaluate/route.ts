@@ -11,23 +11,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // 优先使用 DeepSeek，备选 OpenAI
-    const deepseekKey = process.env.DEEPSEEK_API_KEY;
-    const openaiKey = process.env.OPENAI_API_KEY;
-    
-    let apiUrl: string;
-    let apiKey: string;
-    let model: string;
-    
-    if (deepseekKey) {
-      apiUrl = 'https://api.deepseek.com/v1/chat/completions';
-      apiKey = deepseekKey;
-      model = 'deepseek-chat';
-    } else if (openaiKey) {
-      apiUrl = 'https://api.openai.com/v1/chat/completions';
-      apiKey = openaiKey;
-      model = 'gpt-4o-mini';
-    } else {
+    // 使用 OpenAI Key 调用 Kimi API（用户提供的 Key 实际上是 Kimi 的）
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
       return NextResponse.json(
         { error: '服务配置错误：API Key 未配置' },
         { status: 500 }
@@ -72,14 +58,15 @@ verdict 说明：
 
 请只返回 JSON，不要其他文字。`;
 
-    const response = await fetch(apiUrl, {
+    // 调用 Kimi API
+    const response = await fetch('https://api.moonshot.cn/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model,
+        model: 'moonshot-v1-8k',
         messages: [
           { role: 'system', content: '你是一个专业的创业投资评估助手，基于 YC 和中国投资视角给出建议。只返回 JSON 格式。' },
           { role: 'user', content: prompt }
@@ -92,7 +79,7 @@ verdict 说明：
     const responseData = await response.json();
 
     if (!response.ok) {
-      console.error('AI API error:', response.status, responseData);
+      console.error('Kimi API error:', response.status, responseData);
       return NextResponse.json(
         { 
           error: 'AI 服务暂时不可用', 
